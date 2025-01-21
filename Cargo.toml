@@ -1,0 +1,11 @@
+[package]
+name = "ls"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+chrono = "0.4.39"
+clap = { version = "4.5.27", features = ["derive"] }
+colour = "2.1.0"
+inline_colorization = "0.1.6"
