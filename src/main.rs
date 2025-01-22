@@ -67,13 +67,7 @@ fn main() -> Result<()> {
             continue;
         }
 
-        let metadata = match entry.metadata() {
-            Ok(meta) => meta,
-            Err(e) => {
-                eprintln!("Error fetching metadata: {}", e);
-                continue;
-            }
-        };
+        let metadata = entry.metadata()?;
 
         // File size
         let size = metadata.len();
@@ -97,7 +91,7 @@ fn main() -> Result<()> {
         };
 
         println!(
-            "{:<10} {:<20} {}",
+            "{} {:<20} {}",
             human_readable_size(size),
             mod_time,
             colored_name
@@ -118,16 +112,19 @@ fn format_system_time(timestamp: u64) -> String {
 /// Converts a size in bytes to a human-readable string (e.g., KB, MB, GB)
 fn human_readable_size(bytes: u64) -> String {
     const UNITS: [&str; 5] = ["B", "KB", "MB", "GB", "TB"];
+    const COLORS: [&str; 5] = ["", color_green, color_yellow, color_red, color_magenta];
     let mut size = bytes as f64;
-    let mut unit = &UNITS[0];
+    let mut unit = UNITS[0];
+    let mut color = COLORS[0];
 
-    for next_unit in &UNITS {
+    for (index, next_unit) in UNITS.iter().enumerate() {
         unit = next_unit;
+        color = COLORS[index];
         if size < 1024.0 {
             break;
         }
         size /= 1024.0;
     }
 
-    format!("{:.2} {}", size, unit)
+    format!("{color}{:>8.2}{:<2}{color_reset}", size, unit)
 }
