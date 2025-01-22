@@ -1,9 +1,14 @@
 use anyhow::Result;
 use chrono::DateTime;
 use clap::Parser;
+use extension::{COMPRESSED_FILE_EXTENSIONS, EXECUTABLE_EXTENSIONS, IMAGE_FILE_EXTENSIONS};
 use inline_colorization::*;
-use std::fs;
+use std::env::consts::EXE_EXTENSION;
+use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
+use std::{default, fs};
+
+mod extension;
 
 /// Command-line arguments parser
 #[derive(Parser)]
@@ -21,6 +26,9 @@ struct Args {
     /// reverse sort
     #[clap(short, long)]
     reverse: bool,
+    /// Path to list
+    #[clap(default_value = ".")]
+    path: PathBuf,
 }
 
 fn main() -> Result<()> {
@@ -28,7 +36,7 @@ fn main() -> Result<()> {
 
     let mut entries = vec![];
 
-    for e in fs::read_dir(".")? {
+    for e in fs::read_dir(args.path)? {
         entries.push(e?);
     }
 
@@ -82,12 +90,25 @@ fn main() -> Result<()> {
         };
         let mod_time = format_system_time(mod_time);
 
+        let path = entry.path();
+        let ext = path
+            .extension()
+            .unwrap_or_default()
+            .to_str()
+            .unwrap_or_default();
+
         // File type and coloring
         let colored_name = if metadata.is_dir() {
             format!("{style_bold}{color_blue}{file_name}{color_reset}{style_reset}")
         // Directories in blue
+        } else if EXECUTABLE_EXTENSIONS.contains(&ext) {
+            format!("{color_green}{file_name}{color_reset}")
+        } else if COMPRESSED_FILE_EXTENSIONS.contains(&ext) {
+            format!("{color_red}{file_name}{color_reset}")
+        } else if IMAGE_FILE_EXTENSIONS.contains(&ext) {
+            format!("{color_bright_magenta}{file_name}{color_reset}")
         } else {
-            file_name.to_string() // Regular files
+            file_name.to_string()
         };
 
         println!(
